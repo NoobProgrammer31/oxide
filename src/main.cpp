@@ -1,3 +1,4 @@
+#include "tokenization.hpp"
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
@@ -6,61 +7,6 @@
 #include <sstream>
 #include <vector>
 using namespace std;
-
-enum class TokenType {
-  exit,
-  inti,
-  secol,
-};
-
-struct Token {
-  TokenType type;
-  optional<string> value;
-};
-
-vector<Token> tokenize(const string &str) {
-  vector<Token> tokens;
-  string buf;
-  for (int i = 0; i < str.length(); i++) {
-    char c = str.at(i);
-    if (isalpha(c)) {
-      buf.push_back(c);
-      i++;
-      while (isalnum(str.at(i))) {
-        buf.push_back(str.at(i));
-        i++;
-      }
-      i--;
-
-      if (buf == "exit") {
-        tokens.push_back({.type = TokenType::exit});
-        buf.clear();
-        continue;
-      } else {
-        cerr << "Messed up babe !\n";
-        exit(EXIT_FAILURE);
-      }
-    } else if (isdigit(c)) {
-      buf.push_back(c);
-      i++;
-      while (isdigit(str.at(i))) {
-        buf.push_back(str.at(i));
-        i++;
-      }
-      i--;
-      tokens.push_back({.type = TokenType::inti, .value = buf});
-      buf.clear();
-    } else if (c == ';') {
-      tokens.push_back({.type = TokenType::secol});
-    } else if (isspace(c)) {
-      continue;
-    } else {
-      cerr << "You Fucked up ! yet again :( \n";
-      exit(EXIT_FAILURE);
-    }
-  }
-  return tokens;
-}
 
 string tokens_to_asm(const vector<Token> &tokens) {
   stringstream output;
@@ -94,7 +40,8 @@ int main(int argc, char *argv[]) {
     contents_stream << input.rdbuf();
     contents = contents_stream.str();
   }
-  vector<Token> tokens = tokenize(contents);
+  Tokenizer tokenizer(std::move(contents));
+  vector<Token> tokens = tokenizer.tokenize();
   {
     fstream file("out.asm", ios::out);
     file << tokens_to_asm(tokens);
